@@ -37,7 +37,7 @@
 				  </div>
 				<div class="form-group">
 				  <div class="col-sm-offset-2 col-sm-10">
-					<button type="submit" class="btn btn-default">开始监测</button>
+					<input type="button" class="btn btn-default" onclick="sendLiveInfo()" value="开始监测"></input>
 				  </div>
 				</div>
 			</form>
@@ -46,8 +46,9 @@
 	<div class="row">
 		<div class="col-md-4">
 			<div class="embed-responsive embed-responsive-16by9">
-				<video width="320" height="240" controls="controls" autoplay> 
-				  <source src="static/video/sample.mp4" type="video/mp4"></source>
+				<video width="320" height="240" controls loop autoplay> 
+				  <source id="live_video" src="static/video/sample.mp4" type="video/mp4"></source>
+				  等待输入直播链接
 				</video>
 			</div>
 		</div>
@@ -55,13 +56,13 @@
 			<h2>
 				视频语音识别结果(ASR)
 			</h2>
-			<p>
+			<p id="asr_result">
 				test test test test test
 			</p>
 			<h2>
 				视频文字识别结果(OCR)
 			</h2>
-			<p>
+			<p id="ocr_result">
 				test test test test test
 			</p>
 		</div>
@@ -69,25 +70,25 @@
 			<h4>
 				违法行为判断
 			</h4>
-			<p>
-				Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui.
+			<p id="is_outlaw">
+				test test test
 			</p>
 			<h4>
 				违法行为类型
 			</h4>
-			<p>
+			<p id="outlaw_kind">
 				test test test
 			</p>
 			<h4>
 				关键词
 			</h4>
-			<p>
+			<p id="key_word">
 				test test test
 			</p>
 			<h4>
 				关键帧
 			</h4>
-			<p>
+			<p id="key_frame">
 				test test test
 			</p>
 		</div>
@@ -97,5 +98,50 @@
     <script src="static/js/jquery.min.js"></script>
     <script src="static/js/bootstrap.min.js"></script>
     <script src="static/js/scripts.js"></script>
+
+	<script type="text/javascript">
+		function sendLiveInfo(){
+			var liveURL = $("#liveURL").val();
+			var liveName = $("#liveName").val();
+			var sensitiveWord = $("#sensitiveWord").val();
+			if (liveURL == "" || liveName == "")
+			{	
+				alert("直播链接或直播名称不能为空！");
+			}
+			else{
+				var livemsg = new Array();
+				livemsg.push({"liveURL":liveURL, "liveName":liveName, "sensitiveWord":sensitiveWord});
+				var datasend = JSON.stringify(livemsg);
+				console.log(datasend);
+				$.ajax({
+					type:"POST",
+					url:"/",
+					dataType:"json",
+					contentType:"application/json; charset=utf-8",
+					data:datasend,
+					success:function(serverdata){
+						if(serverdata.status=="400"){
+							alert(serverdata.msg);
+							var interval = setInterval(function() {
+								$.get({
+									url:"/job",
+									success: function(response) {
+										console.log(response);
+										if (response === 'done') {
+											clearInterval(interval);
+										}
+										msg = JSON.parse(response);
+										$("#live_video").attr("src", msg["live_video_path"]);
+										$("#asr_result").text(msg["asr_result"]);
+										$("#ocr_result").text(msg["ocr_result"]);
+									}
+								});
+							}, 5000); //轮询时间5秒
+						}
+					}
+				});
+			}
+		};
+	</script>
   </body>
 </html>

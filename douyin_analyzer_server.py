@@ -6,7 +6,7 @@ ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 ss.bind(("127.0.0.1", 8086))
 
-ss.listen(5)
+ss.listen(10)
 print("starting %s:%s" %("127.0.0.1", 8086))
 
 while True:
@@ -15,6 +15,10 @@ while True:
         print(client_addr)
         while True:
             try:
+                rcv = conn.recv(1024)
+                rcv = rcv.decode("utf-8")
+                if rcv != "give_me_live_info":
+                    raise Exception
                 video_file_path = "balabala"
                 asr_file_path = "balabala"
                 ocr_file_path = "balabala"
@@ -25,7 +29,6 @@ while True:
                 data = msg.encode("utf-8")
                 print("发送到客户端数据：", data)
                 conn.send(data)
-                time.sleep(5)
             except Exception:
                 break
         conn.close()
